@@ -1,0 +1,22 @@
+{
+	"name": "@newfold-labs/wp-module-adam",
+	"description": "Newfold module for Adam (Ads and More) cross-sell in brand plugins",
+	"license": "GPL-2.0-or-later",
+	"private": true,
+	"scripts": {
+		"build": "wp-scripts build --config webpack/react.config.js",
+		"start": "wp-scripts start --config webpack/react.config.js",
+		"lint-js": "wp-scripts lint-js"
+	},
+	"dependencies": {
+		"@newfold/wp-module-runtime": "^1.1.3",
+		"@wordpress/api-fetch": "^7.0.0",
+		"@wordpress/dom-ready": "^4.0.0",
+		"@wordpress/element": "^6.0.0",
+		"@wordpress/components": "^28.0.0"
+	},
+	"devDependencies": {
+		"@wordpress/scripts": "^27.0.0",
+		"mini-css-extract-plugin": "^2.0.0"
+	}
+}

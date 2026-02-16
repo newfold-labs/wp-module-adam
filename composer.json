@@ -1,0 +1,24 @@
+{
+  "name": "newfold-labs/wp-module-adam",
+  "description": "Newfold module for Adam (Ads and More) cross-sell content in brand plugins",
+  "type": "library",
+  "license": "GPL-2.0-or-later",
+  "authors": [
+    {
+      "name": "Arun Shenoy",
+      "email": "devarunshenoy99@gmail.com"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "NewfoldLabs\\WP\\Module\\Adam\\": "includes"
+    },
+    "files": [
+      "bootstrap.php"
+    ]
+  },
+  "require": {
+    "newfold-labs/wp-module-context": "^1.0.2",
+    "newfold-labs/wp-module-features": "^1.5.1"
+  }
+}
