@@ -2,6 +2,7 @@
 
 namespace NewfoldLabs\WP\Module\Adam;
 
+use NewfoldLabs\WP\Module\Adam\RestApi\RestApi;
 use NewfoldLabs\WP\ModuleLoader\Container;
 use function NewfoldLabs\WP\ModuleLoader\container;
 
@@ -32,18 +33,10 @@ class Adam {
 	public function __construct( Container $container ) {
 		$this->container = $container;
 
-		add_action( 'rest_api_init', array( $this, 'register_rest_routes' ) );
+		new RestApi( $container );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
 
 		new Constants( $container );
-	}
-
-	/**
-	 * Register REST routes for the Adam API (containers/items proxy).
-	 */
-	public function register_rest_routes() {
-		$controller = new RestController( $this->container );
-		$controller->register_routes();
 	}
 
 	/**
@@ -56,9 +49,9 @@ class Adam {
 		$asset_file = $build_dir . '/adam/adam.min.asset.php';
 
 		if ( is_readable( $asset_file ) ) {
-			$asset       = include $asset_file;
-			$deps        = isset( $asset['dependencies'] ) ? $asset['dependencies'] : array();
-			$deps[]      = 'nfd-portal-registry';
+			$asset  = include $asset_file;
+			$deps   = isset( $asset['dependencies'] ) ? $asset['dependencies'] : array();
+			$deps[] = 'nfd-portal-registry';
 
 			wp_register_script(
 				self::SCRIPT_HANDLE,
