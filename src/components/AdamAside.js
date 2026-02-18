@@ -1,7 +1,6 @@
 import { Spinner } from '@wordpress/components';
 import { useAdam } from '../hooks/useAdam';
 import { AdamFragment } from './AdamFragment';
-import { DEFAULT_CONTAINER } from '../data/constants';
 
 /**
  * Adam aside container: fetches items and maps to AdamFragment.
@@ -9,7 +8,7 @@ import { DEFAULT_CONTAINER } from '../data/constants';
  * @return {JSX.Element} Rendered aside content.
  */
 export const AdamAside = () => {
-	const { items, loading, error } = useAdam( DEFAULT_CONTAINER );
+	const { items, loading, error } = useAdam();
 
 	if ( loading ) {
 		return (

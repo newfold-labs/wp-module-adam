@@ -46,24 +46,18 @@ class AdamController extends WP_REST_Controller {
 	}
 
 	/**
-	 * Registers the containers route.
+	 * Registers the items route.
 	 */
 	public function register_routes() {
 		register_rest_route(
 			$this->namespace,
-			'/containers',
+			'/items',
 			array(
 				array(
 					'methods'             => WP_REST_Server::READABLE,
 					'callback'            => array( $this, 'get_items' ),
-					'permission_callback' => array( Permissions::class, 'can_access_containers' ),
-					'args'                => array(
-						'container' => array(
-							'type'              => 'string',
-							'default'           => Config::get_default_container(),
-							'sanitize_callback' => 'sanitize_text_field',
-						),
-					),
+					'permission_callback' => array( Permissions::class, 'can_access_items' ),
+					'args'                => array(),
 				),
 			)
 		);
@@ -76,13 +70,11 @@ class AdamController extends WP_REST_Controller {
 	 * @return WP_REST_Response|WP_Error
 	 */
 	public function get_items( $request ) {
-		$container = $request->get_param( 'container' );
-
 		$timeout   = Config::get_request_timeout();
 		$sslverify = wp_get_environment_type() !== 'local';
 
 		$request_builder = new AdamRequestBuilder( $this->container );
-		$body            = $request_builder->build( $container );
+		$body            = $request_builder->build( Config::get_default_container() );
 
 		$api_client = new AdamApiClient();
 		$data       = $api_client->post(

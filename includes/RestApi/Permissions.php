@@ -10,11 +10,11 @@ use WP_Error;
 class Permissions {
 
 	/**
-	 * Check if the current user can access Adam containers endpoint.
+	 * Check if the current user can access Adam items endpoint.
 	 *
 	 * @return true|WP_Error True if allowed, WP_Error otherwise.
 	 */
-	public static function can_access_containers() {
+	public static function can_access_items() {
 		if ( ! current_user_can( 'manage_options' ) ) {
 			return new WP_Error(
 				'rest_forbidden_context',

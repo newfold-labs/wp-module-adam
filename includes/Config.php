@@ -17,7 +17,7 @@ class Config {
 	private static $config = array(
 		'rest_namespace'       => 'newfold-adam/v1',
 		'api_url'              => 'https://adam.bluehost.com/api/v1/getXSell',
-		'default_container'    => 'AMHPCardsV2',
+		'default_container'    => 'WPAdmin',
 		'channel'              => 'Web',
 		'response_type'        => 'frag',
 		'default_country_code' => 'US',
@@ -51,12 +51,27 @@ class Config {
 	}
 
 	/**
-	 * Adam getXSell API URL.
+	 * Adam getXSell API URL. Uses NFD_ADAM_URL constant if defined (e.g. for QA), otherwise config default (prod).
 	 *
 	 * @return string
 	 */
 	public static function get_api_url() {
+		if ( defined( 'NFD_ADAM_URL' ) ) {
+			return NFD_ADAM_URL;
+		}
 		return (string) self::get( 'api_url' );
+	}
+
+	/**
+	 * Test offer codes for getXSell (QA). Returns array only when NFD_ADAM_TEST_OFFERS is defined and is array; otherwise null (omit key from payload).
+	 *
+	 * @return array<int, string>|null
+	 */
+	public static function get_test_offers() {
+		if ( defined( 'NFD_ADAM_TEST_OFFERS' ) && is_array( NFD_ADAM_TEST_OFFERS ) ) {
+			return NFD_ADAM_TEST_OFFERS;
+		}
+		return null;
 	}
 
 	/**
@@ -132,6 +147,16 @@ class Config {
 	 */
 	public static function get_default_env() {
 		return (string) self::get( 'default_env' );
+	}
+
+	/**
+	 * Environment type for getXSell (e.g. production, staging, local). Uses wp_get_environment_type() with config default when empty.
+	 *
+	 * @return string
+	 */
+	public static function get_env() {
+		$env = wp_get_environment_type();
+		return '' !== $env ? $env : self::get_default_env();
 	}
 
 	/**

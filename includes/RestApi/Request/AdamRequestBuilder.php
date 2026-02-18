@@ -32,40 +32,39 @@ class AdamRequestBuilder {
 	/**
 	 * Build request body for Adam getXSell API.
 	 *
-	 * Populated from WordPress / Hiive / Config:
-	 * - siteUrl, tempDomain, prodInstId, plugins from helpers
-	 * - env, isLoggedIn from WordPress; currencyCode from Config
-	 * - brand, channel, responseType, etc. from Config
+	 * Payload keys: containerName, brand, env, channel, responseType, countryCode, currencyCode,
+	 * isLoggedIn, isLargeUser, cart, reDirectToPage, siteUrl, tempDomain, prodInstId, plugins.
+	 * testOffers is included only when NFD_ADAM_TEST_OFFERS is defined.
 	 *
-	 * @param string $container_name Container name (e.g. AMHPCardsV2).
+	 * @param string $container_name Container name (e.g. WPAdmin, AMHPCardsV2).
 	 * @return array<string, mixed>
 	 */
 	public function build( $container_name ) {
-		$env = wp_get_environment_type();
-		if ( '' === $env ) {
-			$env = Config::get_default_env();
-		}
-
 		$prod_inst_resolver = new ProdInstIdResolver();
 
-		return array(
-			'containerName'  => $container_name ? $container_name : Config::get_default_container(),
-			'brand'          => Config::get_brand( $this->container ),
-			'env'            => $env,
-			'channel'        => Config::get_channel(),
-			'responseType'   => Config::get_response_type(),
-			'siteUrl'        => home_url(),
-			'tempDomain'     => TempDomainHelper::is_temp_domain(),
-			'prodInstId'     => $prod_inst_resolver->get(),
-			'plugins'        => InstalledPluginsHelper::get_list(),
-			'userId'         => null,
-			'countryCode'    => Config::get_default_country_code(),
-			'currencyCode'   => Config::get_default_currency(),
-			'isLoggedIn'     => is_user_logged_in(),
-			'isLargeUser'    => false,
-			'cart'           => array(),
-			'reDirectToPage' => Config::get_redirect_to_page(),
-			'isFirstLogin'   => null,
+		$payload = array(
+			'containerName'   => $container_name ? $container_name : Config::get_default_container(),
+			'brand'           => Config::get_brand( $this->container ),
+			'env'             => Config::get_env(),
+			'channel'         => Config::get_channel(),
+			'responseType'    => Config::get_response_type(),
+			'countryCode'     => Config::get_default_country_code(),
+			'currencyCode'    => Config::get_default_currency(),
+			'isLoggedIn'      => is_user_logged_in(),
+			'isLargeUser'     => false,
+			'cart'            => array(),
+			'reDirectToPage'  => Config::get_redirect_to_page(),
+			'siteUrl'         => home_url(),
+			'tempDomain'      => TempDomainHelper::is_temp_domain(),
+			'prodInstId'      => $prod_inst_resolver->get(),
+			'plugins'         => InstalledPluginsHelper::get_list(),
 		);
+
+		$test_offers = Config::get_test_offers();
+		if ( null !== $test_offers ) {
+			$payload['testOffers'] = $test_offers;
+		}
+
+		return $payload;
 	}
 }
