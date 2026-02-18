@@ -33,7 +33,7 @@ class AdamRequestBuilder {
 	 * Build request body for Adam getXSell API.
 	 *
 	 * Payload keys: containerName, brand, env, channel, responseType, countryCode, currencyCode,
-	 * isLoggedIn, isLargeUser, cart, reDirectToPage, siteUrl, tempDomain, prodInstId, plugins.
+	 * isLoggedIn, isLargeUser, cart, reDirectToPage, siteUrl, locale, tempDomain, prodInstId, plugins.
 	 * testOffers is included only when NFD_ADAM_TEST_OFFERS is defined.
 	 *
 	 * @param string $container_name Container name (e.g. WPAdmin, AMHPCardsV2).
@@ -55,6 +55,7 @@ class AdamRequestBuilder {
 			'cart'            => array(),
 			'reDirectToPage'  => Config::get_redirect_to_page(),
 			'siteUrl'         => home_url(),
+			'locale'          => get_locale(),
 			'tempDomain'      => TempDomainHelper::is_temp_domain(),
 			'prodInstId'      => $prod_inst_resolver->get(),
 			'plugins'         => InstalledPluginsHelper::get_list(),
