@@ -27,6 +27,7 @@ class AdamApiClient {
 			'sslverify' => $sslverify,
 			'headers'   => array(
 				'Content-Type' => 'application/json',
+				'User-Agent'   => 'WP_ADAM',
 			),
 			'body'      => wp_json_encode( $body ),
 		);
