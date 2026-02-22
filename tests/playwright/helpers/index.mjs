@@ -23,14 +23,22 @@ export const loadFixture = (name) => {
   return JSON.parse(readFileSync(join(fixturesPath, `${name}.json`), 'utf8'));
 };
 
+const adamItemsFixture = loadFixture('adamItems');
 export const FIXTURES = {
-  adamItems: loadFixture('adamItems'),
+  adamItems: adamItemsFixture,
+  adamItemsEmpty: { status: 'success', response: [] },
+  adamItemsMultiple: {
+    ...adamItemsFixture,
+    response: [ ...(adamItemsFixture.response || []), ...(adamItemsFixture.response || []) ],
+  },
 };
 
 export const SELECTORS = {
   appRendered: '#wppbh-app-rendered',
   appAside: '[data-test-id="app-aside"]',
   appAsideAdamCard: '[data-test-id="app-aside-adam-card"]',
+  appAsideAdamList: '.adam-aside-list',
+  appAsideLoading: '.adam-aside-loading',
   appBody: '.wppbh-app-body',
 };
 
@@ -38,6 +46,19 @@ export const SELECTORS = {
 export const API_PATTERNS = {
   adamItems: /newfold-adam[\s\S]*?v1[\s\S]*?items/,
 };
+
+/**
+ * Wait for the app aside to be attached and scroll it into view. Does not assert visibility
+ * (avoids flaky waitFor visible in plugin utils). Use before expect(aside).toBeVisible().
+ * @param {import('@playwright/test').Page} page
+ * @returns {Promise<import('@playwright/test').Locator>} The aside locator
+ */
+export async function ensureAsideInView(page) {
+  const aside = page.locator(SELECTORS.appAside);
+  await aside.waitFor({ state: 'attached', timeout: 15000 });
+  await aside.scrollIntoViewIfNeeded();
+  return aside;
+}
 
 /**
  * Navigate to plugin home page (where Adam aside is shown).
@@ -59,6 +80,21 @@ export async function mockAdamApi(page, fixture) {
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify(fixture),
+    })
+  );
+}
+
+/**
+ * Mock the Adam API to return an error (e.g. 502). useAdam will catch and AdamAside will render null (no cards).
+ * @param {import('@playwright/test').Page} page
+ * @param {number} [status=502] - HTTP status to return
+ */
+export async function mockAdamApiError(page, status = 502) {
+  await page.route(API_PATTERNS.adamItems, (route) =>
+    route.fulfill({
+      status,
+      contentType: 'application/json',
+      body: JSON.stringify({ code: 'adam_error', message: 'Service unavailable' }),
     })
   );
 }
@@ -116,12 +152,14 @@ async function dismissPostLoginIntercepts(page) {
 
 /**
  * Login, dismiss intercepts, set Adam mock (before first admin load so the request is always mocked),
- * navigate to home, and wait for app and Adam aside content.
+ * navigate to home, and wait for app (and optionally Adam aside cards).
  * Handles verification and "Database Update Required" both after login and after navigateToHome.
  * @param {import('@playwright/test').Page} page
  * @param {Object} [fixture] - Adam REST response fixture (default: FIXTURES.adamItems)
+ * @param {{ waitForAdamCards?: boolean }} [options] - If waitForAdamCards is false, only wait for app and aside (no cards)
  */
-export async function setupAndNavigateToHome(page, fixture = FIXTURES.adamItems) {
+export async function setupAndNavigateToHome(page, fixture = FIXTURES.adamItems, options = {}) {
+  const { waitForAdamCards = true } = options;
   await mockAdamApi(page, fixture);
   await auth.loginToWordPress(page);
   await dismissAdminEmailVerificationIfPresent(page);
@@ -136,5 +174,33 @@ export async function setupAndNavigateToHome(page, fixture = FIXTURES.adamItems)
     await navigateToHome(page);
   }
   await page.waitForSelector(SELECTORS.appRendered, { timeout: 15000 });
-  await page.waitForSelector(SELECTORS.appAsideAdamCard, { timeout: 15000 });
+  if (waitForAdamCards) {
+    await page.locator(SELECTORS.appAsideAdamCard).first().waitFor({ state: 'visible', timeout: 15000 });
+  } else {
+    await page.waitForSelector(SELECTORS.appAside, { state: 'attached', timeout: 15000 });
+  }
+}
+
+/**
+ * Same as setupAndNavigateToHome but mocks Adam API with an error (e.g. 502). Use for "API error" scenario.
+ * Waits for app and aside only (no cards).
+ * @param {import('@playwright/test').Page} page
+ * @param {number} [status=502] - HTTP status to return
+ */
+export async function setupAndNavigateToHomeWithErrorMock(page, status = 502) {
+  await mockAdamApiError(page, status);
+  await auth.loginToWordPress(page);
+  await dismissAdminEmailVerificationIfPresent(page);
+  await runDatabaseUpdateIfPresent(page);
+  await navigateToHome(page);
+  let dismissed = await dismissPostLoginIntercepts(page);
+  if (dismissed) {
+    await navigateToHome(page);
+    dismissed = await dismissPostLoginIntercepts(page);
+  }
+  if (dismissed) {
+    await navigateToHome(page);
+  }
+  await page.waitForSelector(SELECTORS.appRendered, { timeout: 15000 });
+  await page.waitForSelector(SELECTORS.appAside, { state: 'attached', timeout: 15000 });
 }
