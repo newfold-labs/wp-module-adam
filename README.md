@@ -61,5 +61,9 @@ Or for a local path repo (e.g. `modules/wp-module-adam`):
 
 The module registers via the `newfold/features/filter/register` filter and initializes on `plugins_loaded`.
 
+## Testing
+
+Playwright e2e tests live in `tests/playwright/`. They run from the brand plugin repo (see [tests/playwright/README.md](tests/playwright/README.md) for how to run them locally). CI runs them via the workflow in `.github/workflows/brand-plugin-test-playwright.yml` when the module is built and tested with the plugin.
+
 [More on Newfold WordPress Modules](https://github.com/newfold-labs/wp-module-loader)
 [More on the Newfold Features Modules](https://github.com/newfold-labs/wp-module-features)
