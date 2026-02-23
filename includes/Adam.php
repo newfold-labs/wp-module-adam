@@ -35,8 +35,39 @@ class Adam {
 
 		new RestApi( $container );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
+		add_filter( 'newfold_runtime', array( __CLASS__, 'add_to_runtime' ) );
+		add_action( 'wp_login', array( $this, 'on_login_refresh_adam_cache' ), 10, 2 );
 
 		new Constants( $container );
+	}
+
+	/**
+	 * On login (or SSO): refresh Adam items cache for the user so GET /items can serve from cache.
+	 *
+	 * @param string  $user_login Username.
+	 * @param \WP_User $user      Logged-in user.
+	 */
+	public function on_login_refresh_adam_cache( $user_login, $user ) {
+		if ( ! $user instanceof \WP_User || ! $user->ID ) {
+			return;
+		}
+		if ( ! user_can( $user, 'manage_options' ) ) {
+			return;
+		}
+		AdamItemCache::refresh_cache_for_user( $user->ID );
+	}
+
+	/**
+	 * Add Adam REST namespace to NewfoldRuntime so the frontend can build the items URL without hardcoding.
+	 *
+	 * @param array<string, mixed> $runtime Runtime array passed by wp-module-runtime.
+	 * @return array<string, mixed>
+	 */
+	public static function add_to_runtime( $runtime ) {
+		$runtime['adam'] = array(
+			'restNamespace' => Config::get_rest_namespace(),
+		);
+		return $runtime;
 	}
 
 	/**

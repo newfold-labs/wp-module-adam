@@ -23,12 +23,25 @@ class Config {
 		'default_country_code' => 'US',
 		'redirect_to_page'     => 'AM',
 		'default_currency'     => 'USD',
-		'default_env'          => 'production',
+		'default_env'          => 'prod',
 		'request_timeout'      => 30,
 		'temp_domain_suffixes' => array( 'mybluehost.me' ),
 		'default_hiive_url'    => 'https://hiive.cloud/api',
 		'hiive_customer_path'  => '/sites/v1/customer',
 		'default_brand'        => 'bluehost',
+	);
+
+	/**
+	 * Map WordPress environment type (wp_get_environment_type) to Adam API env values.
+	 * Adam accepts: qa, stg, prod, development.
+	 *
+	 * @var array<string, string>
+	 */
+	private static $env_map = array(
+		'production'  => 'prod',
+		'staging'     => 'stg',
+		'development' => 'development',
+		'local'       => 'development',
 	);
 
 	/**
@@ -150,13 +163,16 @@ class Config {
 	}
 
 	/**
-	 * Environment type for getXSell (e.g. production, staging, local). Uses wp_get_environment_type() with config default when empty.
+	 * Environment type for getXSell. Maps wp_get_environment_type() to Adam API values (qa, stg, prod, development).
 	 *
-	 * @return string
+	 * @return string One of: qa, stg, prod, development.
 	 */
 	public static function get_env() {
-		$env = wp_get_environment_type();
-		return '' !== $env ? $env : self::get_default_env();
+		$wp_env = wp_get_environment_type();
+		if ( '' === $wp_env ) {
+			return self::get_default_env();
+		}
+		return isset( self::$env_map[ $wp_env ] ) ? self::$env_map[ $wp_env ] : self::get_default_env();
 	}
 
 	/**

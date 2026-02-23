@@ -15,7 +15,14 @@ export const useAdam = () => {
 		setLoading( true );
 		setError( null );
 
-		fetchAdam()
+		const fetchWithRetry = () =>
+			fetchAdam().catch( ( err ) => {
+				return fetchAdam().catch( () => {
+					throw err;
+				} );
+			} );
+
+		fetchWithRetry()
 			.then( ( data ) => {
 				const list = data?.response ?? [];
 				setItems( Array.isArray( list ) ? list : [] );
