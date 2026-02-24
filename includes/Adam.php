@@ -36,25 +36,31 @@ class Adam {
 		new RestApi( $container );
 		add_action( 'admin_enqueue_scripts', array( __CLASS__, 'register_assets' ) );
 		add_filter( 'newfold_runtime', array( __CLASS__, 'add_to_runtime' ) );
-		add_action( 'wp_login', array( $this, 'on_login_refresh_adam_cache' ), 10, 2 );
+		add_action( 'wp_login', array( $this, 'on_login_invalidate_adam_cache' ), 10, 2 );
 
 		new Constants( $container );
 	}
 
 	/**
-	 * On login (or SSO): refresh Adam items cache for the user so GET /items can serve from cache.
+	 * On login: invalidate the Adam items cache so the next page visit fetches fresh data.
 	 *
-	 * @param string   $user_login Username.
-	 * @param \WP_User $user      Logged-in user.
+	 * Deletes the user meta key rather than pre-fetching from Adam. This avoids making
+	 * an outbound API call during login — which would block the login response and waste
+	 * a request for users who never visit the page where ads are displayed.
+	 *
+	 * The REST GET /items endpoint lazy-loads from Adam on first visit after login.
+	 *
+	 * @param string   $_user_login Username (unused; required by wp_login hook signature).
+	 * @param \WP_User $user        Logged-in user.
 	 */
-	public function on_login_refresh_adam_cache( $user_login, $user ) {
+	public function on_login_invalidate_adam_cache( $_user_login, $user ) {
 		if ( ! $user instanceof \WP_User || ! $user->ID ) {
 			return;
 		}
 		if ( ! user_can( $user, 'manage_options' ) ) {
 			return;
 		}
-		AdamItemCache::refresh_cache_for_user( $user->ID );
+		AdamItemCache::delete_cache_for_user( $user->ID );
 	}
 
 	/**

@@ -74,7 +74,7 @@ class AdamController extends WP_REST_Controller {
 
 		$items = AdamItemCache::get_cached_items( $user_id );
 
-		if ( empty( $items ) ) {
+		if ( null === $items ) {
 			$items = AdamItemCache::refresh_cache_for_user( $user_id );
 		}
 
