@@ -44,7 +44,7 @@ class Adam {
 	/**
 	 * On login (or SSO): refresh Adam items cache for the user so GET /items can serve from cache.
 	 *
-	 * @param string  $user_login Username.
+	 * @param string   $user_login Username.
 	 * @param \WP_User $user      Logged-in user.
 	 */
 	public function on_login_refresh_adam_cache( $user_login, $user ) {
