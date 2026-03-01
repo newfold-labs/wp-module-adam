@@ -150,6 +150,38 @@ async function dismissPostLoginIntercepts(page) {
   return changed;
 }
 
+const DEFAULT_POST_LOGIN_INTERCEPT_MAX_ATTEMPTS = 3;
+
+/**
+ * Dismiss post-login intercepts (verification, database update) with a bounded retry loop.
+ * Navigates back to home after each dismiss; stops when nothing was dismissed or max attempts reached.
+ * @param {import('@playwright/test').Page} page
+ * @param {{ maxAttempts?: number }} [options] - maxAttempts: max navigate+dismiss cycles (default 3)
+ * @throws {Error} If intercepts are still present after maxAttempts (possible infinite intercept loop)
+ */
+async function dismissPostLoginInterceptsWithRetry(page, options = {}) {
+  const maxAttempts = options.maxAttempts ?? DEFAULT_POST_LOGIN_INTERCEPT_MAX_ATTEMPTS;
+  let attempt = 0;
+  let dismissed;
+
+  do {
+    dismissed = await dismissPostLoginIntercepts(page);
+    if (dismissed) {
+      attempt += 1;
+      if (process.env.DEBUG_ADAM_E2E) {
+        console.log(`[Adam E2E] Post-login intercept dismissed (attempt ${attempt}/${maxAttempts}), re-navigating to home.`);
+      }
+      if (attempt >= maxAttempts) {
+        throw new Error(
+          `Post-login intercepts (verification/database update) still present after ${maxAttempts} attempts. ` +
+          'Possible infinite intercept loop or flaky UI.'
+        );
+      }
+      await navigateToHome(page);
+    }
+  } while (dismissed);
+}
+
 /**
  * Login, dismiss intercepts, set Adam mock (before first admin load so the request is always mocked),
  * navigate to home, and wait for app (and optionally Adam aside cards).
@@ -165,14 +197,7 @@ export async function setupAndNavigateToHome(page, fixture = FIXTURES.adamItems,
   await dismissAdminEmailVerificationIfPresent(page);
   await runDatabaseUpdateIfPresent(page);
   await navigateToHome(page);
-  let dismissed = await dismissPostLoginIntercepts(page);
-  if (dismissed) {
-    await navigateToHome(page);
-    dismissed = await dismissPostLoginIntercepts(page);
-  }
-  if (dismissed) {
-    await navigateToHome(page);
-  }
+  await dismissPostLoginInterceptsWithRetry(page);
   await page.waitForSelector(SELECTORS.appRendered, { timeout: 15000 });
   if (waitForAdamCards) {
     await page.locator(SELECTORS.appAsideAdamCard).first().waitFor({ state: 'visible', timeout: 15000 });
@@ -193,14 +218,7 @@ export async function setupAndNavigateToHomeWithErrorMock(page, status = 502) {
   await dismissAdminEmailVerificationIfPresent(page);
   await runDatabaseUpdateIfPresent(page);
   await navigateToHome(page);
-  let dismissed = await dismissPostLoginIntercepts(page);
-  if (dismissed) {
-    await navigateToHome(page);
-    dismissed = await dismissPostLoginIntercepts(page);
-  }
-  if (dismissed) {
-    await navigateToHome(page);
-  }
+  await dismissPostLoginInterceptsWithRetry(page);
   await page.waitForSelector(SELECTORS.appRendered, { timeout: 15000 });
   await page.waitForSelector(SELECTORS.appAside, { state: 'attached', timeout: 15000 });
 }

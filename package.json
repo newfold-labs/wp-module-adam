@@ -3,8 +3,8 @@
 	"description": "Newfold module for Adam (Ads and More) cross-sell in brand plugins",
 	"license": "GPL-2.0-or-later",
 	"private": true,
-"scripts": {
-    "build": "wp-scripts build --config webpack/react.config.js",
+	"scripts": {
+		"build": "wp-scripts build --config webpack/react.config.js",
 		"start": "wp-scripts start --config webpack/react.config.js",
 		"lint-js": "wp-scripts lint-js"
 	},

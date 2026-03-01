@@ -1,6 +1,31 @@
 import { useEffect, useState } from '@wordpress/element';
 import { fetchAdam } from '../api';
 
+const RETRY_DELAY_MS = 1500;
+const CLIENT_ERROR_MIN = 400;
+const CLIENT_ERROR_MAX = 499;
+
+/**
+ * Returns true if the error is retryable (e.g. network or 5xx). Skips retry for 4xx client errors.
+ * apiFetch rejects with the REST response body when present, which may include data.status.
+ *
+ * @param {Error & { code?: string, data?: { status?: number } }} err - Error from apiFetch.
+ * @return {boolean}
+ */
+function isRetryableError( err ) {
+	const status = err?.data?.status;
+	if ( typeof status === 'number' && status >= CLIENT_ERROR_MIN && status <= CLIENT_ERROR_MAX ) {
+		return false;
+	}
+	return true;
+}
+
+/**
+ * @param {number} ms
+ * @return {Promise<void>}
+ */
+const delay = ( ms ) => new Promise( ( resolve ) => setTimeout( resolve, ms ) );
+
 /**
  * Fetches Adam items and returns items, loading, and error state.
  *
@@ -17,9 +42,14 @@ export const useAdam = () => {
 
 		const fetchWithRetry = () =>
 			fetchAdam().catch( ( err ) => {
-				return fetchAdam().catch( () => {
+				if ( ! isRetryableError( err ) ) {
 					throw err;
-				} );
+				}
+				return delay( RETRY_DELAY_MS ).then( () =>
+					fetchAdam().catch( () => {
+						throw err;
+					} )
+				);
 			} );
 
 		fetchWithRetry()

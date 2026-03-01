@@ -45,6 +45,17 @@ class Config {
 	);
 
 	/**
+	 * Default hostnames allowed for the Adam API URL (NFD_ADAM_URL or filter override).
+	 * Prevents sending sensitive data (brand, plugins, customer_id, site URL) to untrusted hosts.
+	 *
+	 * @var array<int, string>
+	 */
+	private static $default_allowed_adam_hosts = array(
+		'adam.bluehost.com',
+		'global-nfd-nfd-adserver-bh.apps.atlanta1.newfoldmb.com',
+	);
+
+	/**
 	 * Get a config value by key.
 	 *
 	 * @param string $key Config key.
@@ -64,15 +75,59 @@ class Config {
 	}
 
 	/**
-	 * Adam getXSell API URL. Uses NFD_ADAM_URL constant if defined (e.g. for QA), otherwise config default (prod).
+	 * Allowed hostnames for the Adam API URL. Filterable for custom environments.
+	 *
+	 * @return array<int, string>
+	 */
+	public static function get_allowed_adam_api_hosts() {
+		$hosts = self::$default_allowed_adam_hosts;
+		return array_values( array_filter( (array) apply_filters( 'nfd_adam_allowed_api_hosts', $hosts ) ) );
+	}
+
+	/**
+	 * Validates that a URL is HTTPS and its host is in the allowed list.
+	 *
+	 * @param string $url Adam API URL (e.g. from NFD_ADAM_URL).
+	 * @return bool True if URL is safe to use.
+	 */
+	public static function is_valid_adam_api_url( $url ) {
+		if ( ! is_string( $url ) || '' === trim( $url ) ) {
+			return false;
+		}
+		$parsed = wp_parse_url( trim( $url ) );
+		if ( empty( $parsed['host'] ) || empty( $parsed['scheme'] ) ) {
+			return false;
+		}
+		if ( 'https' !== strtolower( $parsed['scheme'] ) ) {
+			return false;
+		}
+		$host = strtolower( $parsed['host'] );
+		$allowed = array_map( 'strtolower', self::get_allowed_adam_api_hosts() );
+		return in_array( $host, $allowed, true );
+	}
+
+	/**
+	 * Adam getXSell API URL. Uses NFD_ADAM_URL constant if defined and valid (see is_valid_adam_api_url),
+	 * otherwise config default. Rejects invalid custom URLs to avoid sending sensitive data to untrusted hosts.
+	 * Final URL is filterable via nfd_adam_api_url.
 	 *
 	 * @return string
 	 */
 	public static function get_api_url() {
+		$url = (string) self::get( 'api_url' );
 		if ( defined( 'NFD_ADAM_URL' ) ) {
-			return NFD_ADAM_URL;
+			$constant_url = NFD_ADAM_URL;
+			if ( self::is_valid_adam_api_url( $constant_url ) ) {
+				$url = $constant_url;
+			} else {
+				do_action( 'nfd_adam_invalid_api_url_rejected', $constant_url );
+			}
 		}
-		return (string) self::get( 'api_url' );
+		$filtered = apply_filters( 'nfd_adam_api_url', $url );
+		if ( is_string( $filtered ) && self::is_valid_adam_api_url( $filtered ) ) {
+			return $filtered;
+		}
+		return $url;
 	}
 
 	/**

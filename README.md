@@ -25,8 +25,18 @@ Newfold module for Adam (Ads and More) cross-sell content in brand plugins.
 
 ### wp-config constants
 
-- **NFD_ADAM_URL** – Optional. Full getXSell API URL. If defined (e.g. in wp-config.php), the module uses this instead of the default production URL. Use for QA or staging (e.g. `https://global-nfd-nfd-adserver-bh.apps.atlanta1.newfoldmb.com/api/v1/getXSell`).
+- **NFD_ADAM_URL** – Optional. Full getXSell API URL. If defined (e.g. in wp-config.php), the module uses this **only if the URL host is in the allowed list** (see Security below). Use for QA or staging; invalid URLs are rejected and the default production URL is used instead. The action `nfd_adam_invalid_api_url_rejected` fires when a custom URL is rejected.
 - **NFD_ADAM_TEST_OFFERS** – Optional. Array of test offer codes for getXSell (e.g. `['WPADMIN_LIVE_SUPPORT']`). Default is an empty array. Used for QA; can be removed later.
+
+### Security: Adam API URL
+
+The request payload includes context used for personalization. To avoid sending it to an untrusted host:
+
+- **Allowed hosts** are defined in the module (see `Config::get_allowed_adam_api_hosts()`). Only **HTTPS** URLs whose host is in that list are used. If `NFD_ADAM_URL` (or a filtered URL) points to any other host, it is rejected and the default production URL is used.
+- **Filter `nfd_adam_allowed_api_hosts`**: Pass an array of allowed hostnames to add custom domains (e.g. for internal QA). Use with care; only add trusted hosts.
+- **Filter `nfd_adam_api_url`**: Override the final API URL. The result is validated the same way; invalid URLs are ignored.
+
+Do not set `NFD_ADAM_URL` to a URL you do not control or trust; if the constant is compromised (e.g. via wp-config.php), the module will still reject it unless the host is in the allowlist.
 
 ## Structure
 
