@@ -1,20 +1,19 @@
 import { NewfoldRuntime } from '@newfold/wp-module-runtime';
 import apiFetch from '@wordpress/api-fetch';
 
+const DEFAULT_REST_NAMESPACE = '/newfold-adam/v1';
+
 /**
- * Fetch Adam (cross-sell) items for a container from the module REST API.
+ * Fetch Adam (cross-sell) items from the module REST API.
+ * Uses REST namespace from NewfoldRuntime when set by the backend (wp-module-adam).
  *
- * @param {string} containerName - Container name (e.g. 'AMHPCardsV2').
  * @return {Promise<{ response: Array }>} Promise resolving to { response: items }.
  */
-export const fetchAdam = async ( containerName ) => {
-	const baseUrl = NewfoldRuntime.createApiUrl(
-		'/newfold-adam/v1/containers'
-	);
-	const url =
-		baseUrl +
-		( baseUrl.indexOf( '?' ) !== -1 ? '&' : '?' ) +
-		'container=' +
-		encodeURIComponent( containerName );
+export const fetchAdam = async () => {
+	const restNamespace =
+		NewfoldRuntime.adam?.restNamespace || DEFAULT_REST_NAMESPACE;
+	const path =
+		restNamespace.startsWith( '/' ) ? `${ restNamespace }/items` : `/${ restNamespace }/items`;
+	const url = NewfoldRuntime.createApiUrl( path );
 	return await apiFetch( { url } );
 };

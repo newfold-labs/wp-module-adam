@@ -1,4 +1,10 @@
+# Composer
+/vendor
+
+# Node
 /node_modules
+
+# Logs and env
 *.log
 .env
 .env.*
