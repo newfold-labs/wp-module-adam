@@ -101,7 +101,7 @@ class Config {
 		if ( 'https' !== strtolower( $parsed['scheme'] ) ) {
 			return false;
 		}
-		$host = strtolower( $parsed['host'] );
+		$host    = strtolower( $parsed['host'] );
 		$allowed = array_map( 'strtolower', self::get_allowed_adam_api_hosts() );
 		return in_array( $host, $allowed, true );
 	}
