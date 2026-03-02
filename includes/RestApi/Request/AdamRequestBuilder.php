@@ -43,22 +43,22 @@ class AdamRequestBuilder {
 		$prod_inst_resolver = new ProdInstIdResolver();
 
 		$payload = array(
-			'containerName'   => $container_name ? $container_name : Config::get_default_container(),
-			'brand'           => Config::get_brand( $this->container ),
-			'env'             => Config::get_env(),
-			'channel'         => Config::get_channel(),
-			'responseType'    => Config::get_response_type(),
-			'countryCode'     => Config::get_default_country_code(),
-			'currencyCode'    => Config::get_default_currency(),
-			'isLoggedIn'      => is_user_logged_in(),
-			'isLargeUser'     => false,
-			'cart'            => array(),
-			'reDirectToPage'  => Config::get_redirect_to_page(),
-			'siteUrl'         => home_url(),
-			'locale'          => get_locale(),
-			'tempDomain'      => TempDomainHelper::is_temp_domain(),
-			'prodInstId'      => $prod_inst_resolver->get(),
-			'plugins'         => InstalledPluginsHelper::get_list(),
+			'containerName'  => $container_name ? $container_name : Config::get_default_container(),
+			'brand'          => Config::get_brand( $this->container ),
+			'env'            => Config::get_env(),
+			'channel'        => Config::get_channel(),
+			'responseType'   => Config::get_response_type(),
+			'countryCode'    => Config::get_default_country_code(),
+			'currencyCode'   => Config::get_default_currency(),
+			'isLoggedIn'     => is_user_logged_in(),
+			'isLargeUser'    => false,
+			'cart'           => array(),
+			'reDirectToPage' => Config::get_redirect_to_page(),
+			'siteUrl'        => home_url(),
+			'locale'         => get_locale(),
+			'tempDomain'     => TempDomainHelper::is_temp_domain(),
+			'prodInstId'     => $prod_inst_resolver->get(),
+			'plugins'        => InstalledPluginsHelper::get_list(),
 		);
 
 		$test_offers = Config::get_test_offers();

@@ -98,7 +98,7 @@ class AdamResponseSanitizer {
 			'/\s+style\s*=\s*(["\'"])(.*?)\1/s',
 			function ( $matches ) {
 				$filtered = safecss_filter_attr( $matches[2] );
-				if ( $filtered === '' ) {
+				if ( '' === $filtered ) {
 					return '';
 				}
 				return ' style="' . esc_attr( $filtered ) . '"';
@@ -114,31 +114,31 @@ class AdamResponseSanitizer {
 	 */
 	private function get_allowed_html_for_frag() {
 		return array(
-			'html'   => array(
+			'html'  => array(
 				'lang' => true,
 			),
-			'head'   => array(),
-			'body'   => array(
+			'head'  => array(),
+			'body'  => array(
 				'class' => true,
 				'id'    => true,
 				'style' => true,
 			),
-			'title'  => array(),
-			'div'    => array(
+			'title' => array(),
+			'div'   => array(
 				'class' => true,
 				'id'    => true,
 				'style' => true,
 			),
-			'span'   => array(
+			'span'  => array(
 				'class' => true,
 				'id'    => true,
 				'style' => true,
 			),
-			'b'      => array(
+			'b'     => array(
 				'class' => true,
 				'style' => true,
 			),
-			'a'      => array(
+			'a'     => array(
 				'class'              => true,
 				'href'               => true,
 				'target'             => true,
@@ -153,44 +153,44 @@ class AdamResponseSanitizer {
 				'data-description'   => true,
 				'adtrackingbannerid' => true,
 			),
-			'img'    => array(
+			'img'   => array(
 				'src'    => true,
 				'alt'    => true,
 				'class'  => true,
 				'width'  => true,
 				'height' => true,
 			),
-			'p'      => array(
+			'p'     => array(
 				'class' => true,
 				'style' => true,
 			),
-			'h2'     => array(
+			'h2'    => array(
 				'class' => true,
 				'style' => true,
 			),
-			'h3'     => array(
+			'h3'    => array(
 				'class' => true,
 				'style' => true,
 			),
-			'h6'     => array(
+			'h6'    => array(
 				'class' => true,
 				'style' => true,
 			),
-			'ul'     => array(
+			'ul'    => array(
 				'class' => true,
 				'style' => true,
 			),
-			'li'     => array(
+			'li'    => array(
 				'class' => true,
 				'style' => true,
 			),
-			'meta'   => array(
+			'meta'  => array(
 				'charset' => true,
 				'name'    => true,
 				'content' => true,
 			),
 			// Inline style required for card CSS; values sanitized via safecss_filter_attr(). script/link omitted.
-			'style'  => array(),
+			'style' => array(),
 		);
 	}
 }
