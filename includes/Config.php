@@ -39,7 +39,7 @@ class Config {
 	 */
 	private static $env_map = array(
 		'production'  => 'prod',
-		'staging'     => 'stg',
+		'staging'     => 'prod',
 		'development' => 'development',
 		'local'       => 'development',
 	);
