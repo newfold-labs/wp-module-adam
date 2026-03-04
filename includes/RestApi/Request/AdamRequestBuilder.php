@@ -54,7 +54,7 @@ class AdamRequestBuilder {
 			'isLargeUser'    => false,
 			'cart'           => array(),
 			'reDirectToPage' => Config::get_redirect_to_page(),
-			'siteUrl'        => home_url(),
+			'siteUrl'        => TempDomainHelper::get_site_hostname(),
 			'locale'         => get_locale(),
 			'tempDomain'     => TempDomainHelper::is_temp_domain(),
 			'prodInstId'     => $prod_inst_resolver->get(),
