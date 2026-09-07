@@ -32,7 +32,7 @@
     "newfold-labs/wp-module-features": "^1.5.1"
   },
   "require-dev": {
-    "newfold-labs/wp-php-standards": "^1.2.5",
+    "newfold-labs/wp-php-standards": "^2.0",
     "wp-cli/i18n-command": "^2.6.6"
   },
   "scripts": {
