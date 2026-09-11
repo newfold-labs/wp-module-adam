@@ -4,6 +4,7 @@ namespace NewfoldLabs\WP\Module\Adam\Helpers;
 
 use NewfoldLabs\WP\Module\Adam\Config;
 use NewfoldLabs\WP\Module\Data\HiiveConnection;
+use NewfoldLabs\WP\Module\Data\Helpers\Transient;
 
 /**
  * Resolves prodInstId (customer_id) from Hiive customer API, caching both the answer and a
@@ -44,21 +45,28 @@ class ProdInstIdResolver {
 	 *
 	 * Uses wp-module-data HiiveConnection when available. Returns null if not connected or on failure.
 	 *
+	 * Caching goes through the wp-module-data transient helper rather than the core functions: on a
+	 * site with an object-cache.php drop-in, get_transient() reads only that cache and never falls
+	 * back to the database, so a broken or non-persistent one meant nothing was ever cached and
+	 * every request asked Hiive again.
+	 *
 	 * @return string|null Customer ID or null if unavailable.
 	 */
 	public function get() {
-		$cached = get_transient( self::TRANSIENT_KEY );
+		// Checked first because everything below needs wp-module-data, both to reach Hiive and to
+		// store the answer. Without it there is nothing here to resolve.
+		if ( ! class_exists( 'NewfoldLabs\WP\Module\Data\HiiveConnection' ) ) {
+			return null;
+		}
+
+		$cached = Transient::get( self::TRANSIENT_KEY );
 		if ( false !== $cached && is_string( $cached ) && '' !== $cached ) {
 			return $cached;
 		}
 
 		// Only successes used to be cached, so while Hiive was unhappy every request that wanted the
 		// id asked it again. Sit out a short spell after a failure instead.
-		if ( get_transient( self::FAILURE_TRANSIENT_KEY ) ) {
-			return null;
-		}
-
-		if ( ! class_exists( 'NewfoldLabs\WP\Module\Data\HiiveConnection' ) ) {
+		if ( Transient::get( self::FAILURE_TRANSIENT_KEY ) ) {
 			return null;
 		}
 
@@ -100,8 +108,8 @@ class ProdInstIdResolver {
 		}
 
 		$customer_id = $data['customer_id'];
-		set_transient( self::TRANSIENT_KEY, $customer_id, self::CACHE_TTL );
-		delete_transient( self::FAILURE_TRANSIENT_KEY );
+		Transient::set( self::TRANSIENT_KEY, $customer_id, self::CACHE_TTL );
+		Transient::delete( self::FAILURE_TRANSIENT_KEY );
 
 		return $customer_id;
 	}
@@ -115,7 +123,7 @@ class ProdInstIdResolver {
 	 * @return null
 	 */
 	private function remember_failure() {
-		set_transient( self::FAILURE_TRANSIENT_KEY, 1, self::FAILURE_CACHE_TTL );
+		Transient::set( self::FAILURE_TRANSIENT_KEY, 1, self::FAILURE_CACHE_TTL );
 
 		return null;
 	}
