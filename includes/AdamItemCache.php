@@ -20,6 +20,20 @@ class AdamItemCache {
 	const USER_META_KEY = 'nfd_adam_items';
 
 	/**
+	 * User meta key holding the time an untargeted response should be fetched again.
+	 *
+	 * @var string
+	 */
+	const USER_META_RECHECK_KEY = 'nfd_adam_items_recheck_at';
+
+	/**
+	 * How long to keep a response that was built without a customer id, in seconds.
+	 *
+	 * @var int
+	 */
+	const UNTARGETED_CACHE_TTL = 3600; // 1 hour.
+
+	/**
 	 * Get cached Adam items for a user.
 	 *
 	 * Returns null when the cache has never been populated (meta key absent), so the
@@ -41,6 +55,15 @@ class AdamItemCache {
 		if ( '' === $cached ) {
 			return null; // Meta key absent — never been fetched.
 		}
+
+		// A response built without a customer id is untargeted, and this cache has no expiry of its
+		// own: it is only cleared on login. Left alone it would keep showing that response until the
+		// user next logged out, long after the customer id became resolvable again.
+		$recheck_at = (int) get_user_meta( (int) $user_id, self::USER_META_RECHECK_KEY, true );
+		if ( $recheck_at > 0 && time() >= $recheck_at ) {
+			return null;
+		}
+
 		return is_array( $cached ) ? $cached : null;
 	}
 
@@ -59,6 +82,7 @@ class AdamItemCache {
 			return;
 		}
 		delete_user_meta( (int) $user_id, self::USER_META_KEY );
+		delete_user_meta( (int) $user_id, self::USER_META_RECHECK_KEY );
 	}
 
 	/**
@@ -111,6 +135,13 @@ class AdamItemCache {
 		}
 
 		update_user_meta( $user_id, self::USER_META_KEY, $items );
+
+		if ( empty( $body['prodInstId'] ) ) {
+			update_user_meta( $user_id, self::USER_META_RECHECK_KEY, time() + self::UNTARGETED_CACHE_TTL );
+		} else {
+			delete_user_meta( $user_id, self::USER_META_RECHECK_KEY );
+		}
+
 		return $items;
 	}
 }
