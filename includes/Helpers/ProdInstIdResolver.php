@@ -27,18 +27,37 @@ class ProdInstIdResolver {
 	const CACHE_TTL = 43200;
 
 	/**
-	 * Transient key remembering that a lookup just failed.
+	 * Option holding the retry schedule after a failed lookup: how many have failed in a row, and
+	 * the earliest time we may ask again.
+	 *
+	 * An option rather than a transient because the count has to outlive the wait it produces. A
+	 * transient would expire along with the delay, so the count would reset to one every time and
+	 * there would be no backoff at all.
 	 *
 	 * @var string
 	 */
-	const FAILURE_TRANSIENT_KEY = 'nfd_adam_prod_inst_id_failed';
+	const FAILURE_OPTION = 'nfd_adam_prod_inst_id_failure';
 
 	/**
-	 * How long to leave Hiive alone after a failed lookup, in seconds.
+	 * Wait before the first retry, in seconds. Doubles per consecutive failure.
 	 *
 	 * @var int
 	 */
-	const FAILURE_CACHE_TTL = 900; // 15 minutes.
+	const FAILURE_RETRY_DELAY = 300; // 5 minutes.
+
+	/**
+	 * Ceiling for that wait, in seconds.
+	 *
+	 * @var int
+	 */
+	const FAILURE_RETRY_DELAY_MAX = 43200; // 12 hours.
+
+	/**
+	 * Cap on the stored failure count, which stops growing once the wait has reached its ceiling.
+	 *
+	 * @var int
+	 */
+	const FAILURE_MAX_COUNT = 16;
 
 	/**
 	 * Get prodInstId (customer_id) from cache or Hiive customer API.
@@ -64,18 +83,22 @@ class ProdInstIdResolver {
 			return $cached;
 		}
 
-		// Only successes used to be cached, so while Hiive was unhappy every request that wanted the
-		// id asked it again. Sit out a short spell after a failure instead.
-		if ( Transient::get( self::FAILURE_TRANSIENT_KEY ) ) {
-			return null;
-		}
-
+		// Local checks come before the retry schedule is read, so a site that is not connected does
+		// no cache work at all. Transient::get() is not free: it asks get_dropins() whether this
+		// site has an object-cache drop-in, and that scans wp-content every time it is called.
 		if ( ! HiiveConnection::is_connected() ) {
 			return null;
 		}
 
 		$token = HiiveConnection::get_auth_token();
 		if ( ! $token ) {
+			return null;
+		}
+
+		// Only successes used to be cached, so while Hiive was unhappy every request that wanted the
+		// id asked it again. Wait out the backoff instead.
+		$failure = $this->read_failure_schedule();
+		if ( time() < $failure['next'] ) {
 			return null;
 		}
 
@@ -93,37 +116,69 @@ class ProdInstIdResolver {
 		);
 
 		if ( is_wp_error( $response ) ) {
-			return $this->remember_failure();
+			return $this->remember_failure( $failure );
 		}
 
 		$code = wp_remote_retrieve_response_code( $response );
 		if ( 200 !== $code ) {
-			return $this->remember_failure();
+			return $this->remember_failure( $failure );
 		}
 
 		$body = wp_remote_retrieve_body( $response );
 		$data = json_decode( $body, true );
 		if ( ! is_array( $data ) || empty( $data['customer_id'] ) || ! is_string( $data['customer_id'] ) ) {
-			return $this->remember_failure();
+			return $this->remember_failure( $failure );
 		}
 
 		$customer_id = $data['customer_id'];
 		Transient::set( self::TRANSIENT_KEY, $customer_id, self::CACHE_TTL );
-		Transient::delete( self::FAILURE_TRANSIENT_KEY );
+		delete_option( self::FAILURE_OPTION );
 
 		return $customer_id;
 	}
 
 	/**
-	 * Note that a lookup just failed, so the next few requests do not repeat it.
+	 * Read the retry schedule left by earlier failures.
+	 *
+	 * @return array{count:int, next:int}
+	 */
+	private function read_failure_schedule() {
+		$stored = get_option( self::FAILURE_OPTION, array() );
+		if ( ! is_array( $stored ) ) {
+			$stored = array();
+		}
+
+		return array(
+			'count' => isset( $stored['count'] ) ? max( 0, (int) $stored['count'] ) : 0,
+			'next'  => isset( $stored['next'] ) ? (int) $stored['next'] : 0,
+		);
+	}
+
+	/**
+	 * Note that a lookup just failed and push the next attempt further out.
 	 *
 	 * Only the failures that cost a call are worth remembering. Everything checked before the
 	 * request is local, so those cost nothing to reach again.
 	 *
+	 * The wait doubles because the sites that never resolve are the ones that would otherwise ask
+	 * most often: a site Hiive has no customer record for, or one whose token was revoked, fails
+	 * every time and would sit on a flat delay forever. A site that succeeds asks twice a day.
+	 *
+	 * @param array{count:int, next:int} $failure Schedule as it stood before this attempt.
 	 * @return null
 	 */
-	private function remember_failure() {
-		Transient::set( self::FAILURE_TRANSIENT_KEY, 1, self::FAILURE_CACHE_TTL );
+	private function remember_failure( array $failure ) {
+		$count = min( $failure['count'] + 1, self::FAILURE_MAX_COUNT );
+		$delay = (int) min( self::FAILURE_RETRY_DELAY * pow( 2, $count - 1 ), self::FAILURE_RETRY_DELAY_MAX );
+
+		update_option(
+			self::FAILURE_OPTION,
+			array(
+				'count' => $count,
+				'next'  => time() + $delay,
+			),
+			false
+		);
 
 		return null;
 	}
