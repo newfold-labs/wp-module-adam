@@ -67,7 +67,7 @@ class ProdInstIdResolver {
 	 * Caching goes through the wp-module-data transient helper rather than the core functions: on a
 	 * site with an object-cache.php drop-in, get_transient() reads only that cache and never falls
 	 * back to the database, so a broken or non-persistent one meant nothing was ever cached and
-	 * every request asked Hiive again.
+	 * every request asked Hiive again. See self::read_cache() for the older-wp-module-data case.
 	 *
 	 * @return string|null Customer ID or null if unavailable.
 	 */
@@ -78,7 +78,7 @@ class ProdInstIdResolver {
 			return null;
 		}
 
-		$cached = Transient::get( self::TRANSIENT_KEY );
+		$cached = $this->read_cache();
 		if ( false !== $cached && is_string( $cached ) && '' !== $cached ) {
 			return $cached;
 		}
@@ -131,10 +131,43 @@ class ProdInstIdResolver {
 		}
 
 		$customer_id = $data['customer_id'];
-		Transient::set( self::TRANSIENT_KEY, $customer_id, self::CACHE_TTL );
+		$this->write_cache( $customer_id );
 		delete_option( self::FAILURE_OPTION );
 
 		return $customer_id;
+	}
+
+	/**
+	 * Read the cached id.
+	 *
+	 * Prefers the wp-module-data transient helper, because core get_transient() on a site with an
+	 * object-cache.php drop-in reads only that cache and never falls back to the database. The
+	 * helper is newer than the wp-module-data versions this module accepts, so fall back to the
+	 * core functions rather than fatal where it is absent.
+	 *
+	 * @return mixed Cached value, or false when nothing is stored.
+	 */
+	private function read_cache() {
+		if ( class_exists( Transient::class ) ) {
+			return Transient::get( self::TRANSIENT_KEY );
+		}
+
+		return get_transient( self::TRANSIENT_KEY );
+	}
+
+	/**
+	 * Store the resolved id. See self::read_cache() for why the helper is preferred.
+	 *
+	 * @param string $customer_id Resolved customer id.
+	 * @return void
+	 */
+	private function write_cache( $customer_id ) {
+		if ( class_exists( Transient::class ) ) {
+			Transient::set( self::TRANSIENT_KEY, $customer_id, self::CACHE_TTL );
+			return;
+		}
+
+		set_transient( self::TRANSIENT_KEY, $customer_id, self::CACHE_TTL );
 	}
 
 	/**
