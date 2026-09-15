@@ -19,5 +19,5 @@
     "@wordpress/scripts": "^27.0.0",
     "mini-css-extract-plugin": "^2.0.0"
   },
-  "version": "1.0.1"
+  "version": "1.0.2"
 }
