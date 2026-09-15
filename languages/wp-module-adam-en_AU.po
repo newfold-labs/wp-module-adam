@@ -8,16 +8,16 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "POT-Creation-Date: 2025-02-17T00:00:00+00:00\n"
-"PO-Revision-Date: 2025-02-17T00:00:00+00:00\n"
+"PO-Revision-Date: 2026-09-15T09:28:23+00:00\n"
 "Language: en_AU\n"
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-module-adam\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 
-#: includes/RestApi/Permissions.php:21
-msgid "Sorry, you are not allowed to access this endpoint."
-msgstr "Sorry, you are not allowed to access this endpoint."
-
 #: includes/RestApi/Request/AdamApiClient.php:48
 msgid "Invalid response from cross-sell service."
 msgstr "Invalid response from cross-sell service."
+
+#: includes/RestApi/Permissions.php:21
+msgid "Sorry, you are not allowed to access this endpoint."
+msgstr "Sorry, you are not allowed to access this endpoint."
