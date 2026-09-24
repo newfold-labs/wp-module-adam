@@ -22,6 +22,6 @@ The plugin must have the Adam module as a dependency and wp-env available (e.g. 
 
 ## Structure
 
-- **specs/** – Test files (e.g. `adam-aside.spec.mjs`). All Adam API data is mocked; no real Adam API or WordPress REST call for Adam items.
-- **helpers/index.mjs** – Re-exports plugin helpers and adds Adam SELECTORS, FIXTURES, `mockAdamApi`, `setupAndNavigateToHome`.
+- **specs/** – Test files (e.g. `adam-aside.spec.js`). All Adam API data is mocked; no real Adam API or WordPress REST call for Adam items.
+- **helpers/index.js** – Re-exports plugin helpers and adds Adam SELECTORS, FIXTURES, `mockAdamApi`, `setupAndNavigateToHome`.
 - **fixtures/** – JSON fixtures matching the WordPress REST response shape `{ "response": [ ... ] }` for `newfold-adam/v1/items`.
