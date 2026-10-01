@@ -5,7 +5,7 @@ import {
   setupAndNavigateToHome,
   setupAndNavigateToHomeWithErrorMock,
   utils,
-} from '../helpers/index.mjs';
+} from '../helpers/index.js';
 
 test.describe('App aside (Adam module)', () => {
   test.describe.configure({ timeout: 90000 });
