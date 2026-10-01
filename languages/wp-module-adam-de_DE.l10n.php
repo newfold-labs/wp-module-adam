@@ -1,2 +1,2 @@
 <?php
-return ['domain'=>'wp-module-adam','plural-forms'=>'nplurals=2; plural=(n != 1);','language'=>'de','project-id-version'=>'','pot-creation-date'=>'2025-02-17T00:00:00+00:00','po-revision-date'=>'2026-09-15T09:29:45+00:00','x-generator'=>'WP-CLI 2.12.0','messages'=>[]];
+return ['domain'=>'wp-module-adam','plural-forms'=>'nplurals=2; plural=(n != 1);','language'=>'de','project-id-version'=>'','pot-creation-date'=>'2025-02-17T00:00:00+00:00','po-revision-date'=>'2026-10-01T14:00:12+00:00','x-generator'=>'WP-CLI 2.12.0','messages'=>[]];
