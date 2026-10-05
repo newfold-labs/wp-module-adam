@@ -5,10 +5,17 @@ on:
     types:
       - created
 
+# Disable permissions for all available scopes by default.
+# Any needed permissions should be configured at the job level.
+permissions: {}
+
 jobs:
   webhook:
     name: Send Webhook
     runs-on: ubuntu-latest
+    permissions:
+      contents: read # Required by actions/checkout to clone the (private) repo. The repository_dispatch step uses a custom WEBHOOK_TOKEN, not GITHUB_TOKEN.
+    timeout-minutes: 5
     steps:
 
       - name: Checkout
