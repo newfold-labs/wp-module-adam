@@ -12,10 +12,10 @@ msgstr ""
 "X-Generator: WP-CLI 2.12.0\n"
 "X-Domain: wp-module-adam\n"
 
-#: includes/RestApi/Permissions.php:21
-msgid "Sorry, you are not allowed to access this endpoint."
-msgstr ""
-
 #: includes/RestApi/Request/AdamApiClient.php:48
 msgid "Invalid response from cross-sell service."
+msgstr ""
+
+#: includes/RestApi/Permissions.php:21
+msgid "Sorry, you are not allowed to access this endpoint."
 msgstr ""
